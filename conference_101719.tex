@@ -1,0 +1,245 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+
+
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\usepackage[turkish]{babel}
+
+% IEEEkeywords başlığını "Anahtar Kelimeler" olarak değiştiren komut
+\renewcommand{\IEEEkeywordsname}{Anahtar Kelimeler}
+
+\begin{document}
+
+\title{BT Görüntüleri Üzerinden Otomatik COVID-19 Teşhisinde Derin Öğrenme Modellerinin Performans Analizi\\}
+
+\author{\IEEEauthorblockN{Muhammed Emin KORKUT}
+\IEEEauthorblockA{\textit{Gazi Üniversitesi, Bilgisayar Mühendisliği} \\
+Ankara / Türkiye \\
+24181617001 \\
+https://orcid.org/my-orcid?orcid=0009-0000-6417-9984}
+\and
+\IEEEauthorblockN{Zühtü Semih ÖZGÜR}
+\IEEEauthorblockA{\textit{Gazi Üniversitesi, Bilgisayar Mühendisliği} \\
+Ankara / Türkiye \\
+24181617026 \\
+24181617026@gazi.edu.tr}
+}
+
+\maketitle
+
+\begin{abstract}
+COVID-19 pandemisi, hızlı ve güvenilir tanı yöntemlerine duyulan ihtiyacı önemli ölçüde artırmıştır. Bilgisayarlı tomografi (BT) görüntüleri, COVID-19 enfeksiyonunun teşhisinde yaygın olarak kullanılmasına rağmen manuel değerlendirme süreçleri zaman alıcı ve uzmanlık gerektiren bir yapıdadır. Bu çalışmada, SARS-CoV-2 enfeksiyonunun BT görüntüleri üzerinden otomatik olarak tespit edilmesine yönelik derin öğrenme tabanlı bir sınıflandırma yaklaşımı sunulmuştur. Çalışmada, toplam 2481 BT görüntüsünden oluşan SARS-CoV-2 CT-scan veri seti kullanılmıştır. Veri seti üzerinde çeşitli ön işleme teknikleri uygulanmış ve ardından farklı derin öğrenme mimarilerinin performansları karşılaştırılmıştır. Bu kapsamda, özel olarak tasarlanmış bir Evrişimsel Sinir Ağı (CNN), önceden eğitilmiş ResNet18 modeli ve Vision Transformer (ViT-B/16) mimarisi değerlendirilmiştir. Modeller; doğruluk, kesinlik, duyarlılık ve F1-skoru metrikleri kullanılarak analiz edilmiş, ayrıca ROC eğrileri ve karmaşıklık matrisleri ile ayrıntılı performans değerlendirmeleri gerçekleştirilmiştir. Elde edilen sonuçlar, derin öğrenme tabanlı yöntemlerin COVID-19 tespitinde yüksek başarı sağladığını göstermektedir. Özellikle transfer öğrenme tabanlı modellerin, tıbbi görüntülerde ayırt edici özellikleri daha etkili biçimde öğrenerek daha yüksek sınıflandırma performansı sunduğu gözlemlenmiştir. Çalışma sonucunda, önerilen yaklaşımın erken teşhis süreçlerini destekleyebilecek hızlı, güvenilir ve otomatik karar destek sistemlerinin geliştirilmesine katkı sağlayabileceği değerlendirilmiştir.
+\end{abstract}
+
+\begin{IEEEkeywords}
+COVID-19, bilgisayarlı tomografi, derin öğrenme, evrişimsel sinir ağı, ResNet18, Vision Transformer, transfer öğrenme, tıbbi görüntü işleme.
+\end{IEEEkeywords}
+
+\section{Giriş}
+COVID-19 pandemisi, dünya genelinde sağlık sistemleri üzerinde benzeri görülmemiş bir yük oluşturarak hızlı, doğru ve güvenilir tanı yöntemlerine duyulan ihtiyacı kritik hâle getirmiştir [1]. SARS-CoV-2 tanısında altın standart olarak kabul edilen RT-PCR yöntemi yüksek duyarlılık ve özgüllük sunmasına rağmen, sonuçlanma süresinin uzun olması ve ileri düzey laboratuvar altyapısı gerektirmesi nedeniyle yaygın tarama ve hızlı klinik karar alma süreçlerinde çeşitli operasyonel kısıtlamalara neden olmaktadır [2]. Bu bağlamda, bilgisayarlı tomografi (BT) görüntüleme yöntemleri, akciğer tutulumunu yüksek doğrulukla görselleştirebilmesi sayesinde COVID-19'un erken teşhisi ve hastalık şiddetinin değerlendirilmesinde önemli bir radyolojik araç olarak öne çıkmaktadır.
+
+COVID-19 hastalarında BT görüntülerinde sıklıkla gözlemlenen buzlu cam opasiteleri, konsolidasyon ve bilateral infiltrasyon gibi karakteristik bulgular, enfeksiyonun tespitinde önemli göstergeler sunmaktadır. Ancak pandemi sürecinde artan hasta yoğunluğu, radyologlar üzerindeki iş yükünü ciddi ölçüde artırmış ve manuel görüntü değerlendirme süreçlerini hem zaman açısından maliyetli hem de sürdürülebilirlik açısından zorlayıcı hâle getirmiştir. Ayrıca, geleneksel radyolojik değerlendirmeler uzman yorumuna dayandığından, insan faktörüne bağlı subjektif farklılıklar ortaya çıkabilmektedir. Bu durum, hızlı, tutarlı ve otomatik teşhis sistemlerine olan ihtiyacı artırmıştır.
+
+Son yıllarda yapay zekâ ve özellikle derin öğrenme alanındaki gelişmeler, tıbbi görüntü analizi tabanlı otomatik hastalık tespit sistemlerinin geliştirilmesini mümkün kılmıştır. Evrişimsel Sinir Ağları (CNN) başta olmak üzere derin öğrenme mimarileri, görüntülerden ayırt edici özellikleri otomatik olarak öğrenebilme yetenekleri sayesinde tıbbi görüntüleme uygulamalarında başarılı sonuçlar elde etmektedir. Bunun yanında, son yıllarda dikkat mekanizmalarına dayalı Vision Transformer (ViT) modelleri de görüntü sınıflandırma problemlerinde yüksek performans sergileyerek önemli bir alternatif hâline gelmiştir. Literatürde BT görüntüleri kullanılarak COVID-19 tespitine yönelik çok sayıda çalışma bulunmasına rağmen, mevcut çalışmaların önemli bir bölümü sınırlı veri setleri veya homojen örneklemler üzerinde gerçekleştirilmiştir. Bu nedenle, gerçek klinik koşulları yansıtan geniş ve heterojen veri setleri üzerinde farklı derin öğrenme mimarilerinin karşılaştırmalı olarak incelenmesi hâlen güncelliğini koruyan önemli bir araştırma alanıdır.
+
+Bu çalışmada, Brezilya'daki hastanelerden elde edilen ve toplam 2481 BT görüntüsünden oluşan SARS-CoV-2 CT-scan veri seti kullanılarak COVID-19 enfeksiyonunun otomatik olarak tespit edilmesi amaçlanmıştır [3]. Çalışma kapsamında, gerçek klinik veriler üzerinde yüksek doğruluklu sınıflandırma gerçekleştirilebilirliği araştırılmış; özel olarak tasarlanmış bir CNN modeli ile transfer öğrenme tabanlı ResNet18 ve Vision Transformer (ViT-B/16) mimarilerinin performansları karşılaştırılmıştır. Ayrıca, farklı mimarilerin teşhis başarımı, öğrenme kapasitesi ve genellenebilirlik açısından sunduğu avantajlar ayrıntılı olarak analiz edilmiştir.
+
+Bu çalışmanın temel katkıları aşağıdaki şekilde özetlenebilir:
+
+\begin{enumerate}
+    \item Gerçek klinik ortamlardan elde edilen ve 2481 BT görüntüsünü içeren geniş bir veri seti üzerinde kapsamlı bir analiz gerçekleştirilmesi,
+    \item CNN, ResNet18 ve ViT-B/16 mimarilerinin aynı veri seti üzerinde sistematik olarak karşılaştırılması,
+    \item Transfer öğrenme ve dikkat mekanizması tabanlı yaklaşımların COVID-19 tespitindeki etkinliğinin değerlendirilmesi,
+    \item Derin öğrenme tabanlı yöntemlerin klinik karar destek sistemlerinde kullanılabilirliğine yönelik kapsamlı performans analizlerinin sunulması.
+\end{enumerate}
+
+\section{İlgili Çalışmalar}
+COVID-19'un BT görüntüleri üzerinden otomatik olarak tespit edilmesine yönelik derin öğrenme tabanlı yaklaşımlar, pandeminin başlangıcından itibaren yoğun biçimde araştırılan bir çalışma alanı hâline gelmiştir. Özellikle derin öğrenme modellerinin tıbbi görüntülerden ayırt edici özellikleri otomatik olarak öğrenebilme yeteneği, COVID-19 teşhisinde yüksek başarı oranlarının elde edilmesini sağlamıştır. Bu bölümde, çalışmamızla doğrudan ilişkili olan temel çalışmalar özetlenmektedir.
+
+Soares ve ark. tarafından geliştirilen SARS-CoV-2 CT-scan veri seti, COVID-19 tespitine yönelik çalışmalarda yaygın olarak kullanılan önemli veri kaynaklarından biridir [4]. Brezilya'nın São Paulo şehrindeki hastanelerden Mart–Nisan 2020 tarihleri arasında toplanan veri seti, 60 COVID-19 pozitif ve 60 negatif hastaya ait toplam 2481 BT görüntüsünü içermektedir. Araştırmacılar, açıklanabilir derin öğrenme yaklaşımı olan xDNN modelini kullanarak \%97.31 F1 skoru elde etmiş ve önerilen yöntemin klinik karar destek sistemleri açısından etkili olduğunu göstermiştir. Veri setinin gerçek klinik ortamdan elde edilmiş erken dönem ve nispeten geniş ölçekli örnekler içermesi nedeniyle literatürde önemli bir referans noktası olduğu kabul edilmektedir.
+
+Ardakani ve ark., COVID-19'un BT görüntülerinden hızlı ve güvenilir biçimde tespit edilmesi amacıyla AlexNet, VGG16, VGG19, SqueezeNet, GoogleNet, MobileNet-V2, ResNet18, ResNet50, ResNet101 ve Xception olmak üzere on farklı Evrişimsel Sinir Ağı mimarisini karşılaştırmıştır [5]. Çalışmada, laboratuvar doğrulaması yapılmış 108 COVID-19 hastasına ait 1020 BT kesiti ile COVID-19 dışı viral ve atipik pnömoni vakaları kullanılmıştır. Elde edilen sonuçlara göre en yüksek performans ResNet101 ve Xception modellerinde gözlemlenmiştir. ResNet101 modeli \%99.51 doğruluk ve 0.994 AUC değeri ile en başarılı model olarak rapor edilmiştir. Ayrıca derin öğrenme tabanlı yöntemlerin radyolog performansından daha başarılı sonuçlar sunduğu belirtilmiş ve bu modellerin yardımcı tanı aracı olarak kullanılabileceği ifade edilmiştir.
+
+Song ve ark., COVID-19'un hızlı ve doğru biçimde tespit edilmesi amacıyla BT görüntülerine dayalı derin öğrenme tabanlı bir tanı sistemi geliştirmiştir [6]. Çalışmada, COVID-19 tanısı konmuş 88 hasta, bakteriyel pnömoni tanısı bulunan 100 hasta ve 86 sağlıklı bireye ait BT görüntüleri kullanılmıştır. Geliştirilen modelin COVID-19 ile bakteriyel pnömoniyi ayırt etmede 0.95 AUC, 0.96 duyarlılık ve 0.79 kesinlik değerlerine ulaştığı bildirilmiştir. Ayrıca farklı BT görüntü türlerinin birlikte kullanılması durumunda modelin 0.93 duyarlılık ve 0.86 kesinlik değerleri elde ettiği belirtilmiştir. Araştırmacılar, modelin buzlu cam opasiteleri gibi temel lezyon yapılarını başarılı şekilde tespit edebildiğini ve klinik değerlendirme süreçlerine görsel destek sağlayabildiğini vurgulamıştır.
+
+Jiang ve ark., COVID-19 tanısında derin öğrenme modellerinin performansını artırmak amacıyla CycleGAN tabanlı görüntü sentezleme yaklaşımı önermiştir [7]. Çalışmada, sınırlı sayıdaki COVID-19 BT görüntülerine karşılık akciğer kanseri veri setlerinden yararlanılarak 1186 adet sentetik COVID-19 BT görüntüsü üretilmiştir. Oluşturulan veri seti üzerinde farklı derin öğrenme modelleri ile COVID-19 ve COVID-19 olmayan vakaların sınıflandırılması gerçekleştirilmiş; doğruluk, kesinlik, duyarlılık ve F1-skoru açısından başarılı sonuçlar elde edilmiştir. Çalışma sonucunda, sentetik veri üretiminin eğitim sürecine önemli katkı sağladığı ve veri yetersizliği problemini azaltarak model performansını geliştirdiği ifade edilmiştir.
+
+Kılıç, COVID-19'un akciğer X-ray görüntülerinden otomatik olarak tespit edilmesi amacıyla VGG19 ve MobileNet mimarilerini çok başlıklı dikkat (multi-head attention) mekanizmasıyla birleştiren hibrit bir derin öğrenme modeli önermiştir [8]. Çalışmada COVID-19, normal, pnömoni ve tüberküloz sınıflarına ait toplam 7132 X-ray görüntüsü kullanılmıştır. Önerilen model; mekânsal dikkat, kanal dikkati ve öz-dikkat bileşenlerini bir araya getirerek özellik çıkarım performansını artırmıştır. Deneysel sonuçlarda modelin \%99 doğruluk ve \%99 F1-skoru elde ettiği, COVID-19 sınıfında ise \%99.7 başarı sağladığı belirtilmiştir. Ayrıca modelin düşük çıkarım süresi ve küçük model boyutu sayesinde kaynak kısıtlı sağlık ortamlarında hızlı tarama sistemi olarak kullanılabileceği ifade edilmiştir.
+
+Sarıoğlu, COVID-19'un BT göğüs görüntülerinden tespit edilmesi amacıyla Xception, VGG16, ResNet50, Inception v3 ve Inception-ResNet v2 olmak üzere beş farklı transfer öğrenme mimarisini karşılaştırmıştır [9]. İki farklı açık erişimli BT veri seti kullanılarak gerçekleştirilen çalışmada, veri artırma yöntemlerinin aşırı öğrenme problemini azaltmada etkili olduğu belirtilmiştir. Deney sonuçlarına göre en yüksek başarı \%90.82 doğruluk oranı ile ResNet50 modelinde elde edilmiştir. Ayrıca epoch sayısı, kayıp fonksiyonları ve aktivasyon fonksiyonları gibi hiperparametrelerin model performansı üzerindeki etkileri de detaylı olarak incelenmiştir.
+
+Literatürdeki çalışmalar genel olarak değerlendirildiğinde, derin öğrenme tabanlı yöntemlerin BT görüntüleri üzerinden COVID-19 tespitinde yüksek performans sergilediği görülmektedir. Bununla birlikte, mevcut çalışmaların önemli bir kısmının sınırlı veri setleri üzerinde gerçekleştirildiği veya farklı mimarilerin sistematik biçimde karşılaştırılmadığı dikkat çekmektedir. Özellikle CNN, ResNet ve Vision Transformer tabanlı mimarilerin aynı gerçek klinik veri seti üzerinde karşılaştırıldığı çalışmaların sınırlı olduğu görülmektedir. Bu çalışma kapsamında, SARS-CoV-2 CT-scan veri seti üzerinde CNN, ResNet18 ve ViT-B/16 mimarileri sistematik olarak karşılaştırılarak literatürdeki bu boşluğun giderilmesi amaçlanmaktadır.
+
+
+\section{Yöntem}
+Bu çalışma, BT görüntüleri üzerinden SARS-CoV-2 enfeksiyonunun otomatik tespitine yönelik geliştirilen derin öğrenme modellerinin tasarımını, veri işleme süreçlerini ve deneysel kurulumunu kapsamaktadır. Çalışmanın temel amacı, evrişim tabanlı ve dikkat mekanizmasına dayalı farklı mimari yaklaşımların aynı veri seti üzerindeki sınıflandırma performanslarını sistematik olarak karşılaştırmaktır.
+
+\subsection{Veri Seti ve İstatistiksel Dağılım}
+Araştırmada kullanılan veri seti, Brezilya'nın São Paulo kentindeki hastanelerden elde edilen gerçek klinik verilerden oluşmaktadır. Toplam 2481 adet BT görüntüsünü içeren veri seti, sınıf dengesi gözetilerek yapılandırılmıştır:
+\begin{itemize}
+    \item \textbf{COVID-19 Pozitif Sınıfı:} SARS-CoV-2 enfeksiyonu laboratuvar testleri ile doğrulanmış 1252 BT görüntüsü.
+    \item \textbf{Kontrol Sınıfı (Non-COVID):} Enfekte olmayan bireylere ait 1229 BT görüntüsü.
+\end{itemize}
+Verilerin gerçek klinik ortamlardan elde edilmiş olması, modellerin farklı gürültü ve varyasyonlara karşı genellenebilirliğinin değerlendirilmesi açısından önem taşımaktadır.
+
+\subsection{Veri Ön İşleme ve Bölümleme}
+Model performansını artırmak ve eğitim sürecini optimize etmek amacıyla görüntüler üzerinde aşağıdaki ön işleme adımları uygulanmıştır:
+\begin{itemize}
+    \item \textbf{Boyutlandırma:} Tüm görüntüler, modellerin giriş katmanlarına uygun olarak $224 \times 224$ piksel çözünürlüğe yeniden boyutlandırılmıştır.
+    \item \textbf{Normalizasyon:} Önceden eğitilmiş (pre-trained) modellerin standartlarına uygun olarak, görüntüler $\mu = [0.485, 0.456, 0.406]$ ve $\sigma = [0.229, 0.224, 0.225]$ değerleri kullanılarak normalize edilmiştir.
+    \item \textbf{Veri Bölümleme:} Veri seti; \%70 eğitim, \%15 doğrulama ve \%15 test olmak üzere üç bağımsız alt kümeye ayrılmıştır.
+\end{itemize}
+
+\subsection{Deneysel Kurulum ve Hiperparametreler}
+Çalışmanın tekrarlanabilirliği ve deterministik sonuçlar elde edilmesi amacıyla rastgelelik kontrol altına alınmıştır. Deneylerde kullanılan tüm hiperparametreler Tablo \ref{tab:hiperparametreler}'de özetlenmiştir.
+
+\begin{table}[htbp]
+\caption{Deneysel Eğitim Parametreleri}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Parametre} & \textbf{Değer} \\
+\hline
+Rastgelelik Tohumu (Seed) & 42 \\
+Batch Size (Yığın Boyutu) & 32 \\
+Öğrenme Oranı (Learning Rate) & $1e-4$ \\
+Optimizasyon Algoritması & AdamW \\
+Kayıp Fonksiyonu & Cross-Entropy Loss \\
+Epoch Sayısı & 50 \\
+Donanım Alt Yapısı & NVIDIA CUDA GPU \\
+\hline
+\end{tabular}
+\label{tab:hiperparametreler}
+\end{center}
+\end{table}
+
+\subsection{Karşılaştırmalı Model Mimarileri}
+Bu çalışmada, üç farklı derin öğrenme yaklaşımı karşılaştırılmıştır:
+
+\subsubsection{\textbf{CNN}}
+Yerel öznitelik çıkarımı için iki evrişimli (convolutional) katman, ReLU aktivasyonu ve MaxPool katmanlarından oluşmaktadır. Sınıflandırma kısmında 256 nöronlu gizli katman ve aşırı öğrenmeyi (overfitting) önlemek amacıyla \%50 Dropout uygulanmıştır.
+
+\subsubsection{\textbf{ResNet18}}
+Artık (residual) bağlantılar kullanan bu model, derin ağlardaki gradyan kaybolma problemini çözmektedir. Çalışmada, ImageNet üzerinde eğitilmiş varsayılan ağırlıklar kullanılmış ve son katman iki sınıflı çıkış verecek şekilde güncellenmiştir.
+
+\subsubsection{\textbf{Vision Transformer (ViT-B/16)}}
+Görüntüyü $16 \times 16$ boyutlu yamalara bölerek öz-dikkat (self-attention) mekanizması ile işlemektedir. Küresel bağlamı yakalama yeteneği sayesinde COVID-19'un akciğerdeki yaygın tutulumlarını analiz etmek için tercih edilmiştir.
+
+\subsection{Performans Metrikleri}
+Modellerin başarısını nicel olarak değerlendirmek amacıyla karmaşıklık matrisi (confusion matrix) parametreleri temel alınmıştır. Bu parametreler; Doğru Pozitif ($TP$), Doğru Negatif ($TN$), Yanlış Pozitif ($FP$) ve Yanlış Negatif ($FN$) olarak tanımlanmaktadır. Bu değerler kullanılarak hesaplanan metriklerin matematiksel ifadeleri aşağıda sunulmuştur:
+
+\begin{itemize}
+    \item \textbf{Doğruluk (Accuracy):} Sistemin tüm tahminler içerisindeki genel başarı oranını ifade eder:
+    \begin{equation}
+        \text{Doğruluk} = \frac{TP + TN}{TP + TN + FP + FN}
+    \end{equation}
+
+    \item \textbf{Kesinlik (Precision):} Pozitif olarak tahmin edilen örneklerin ne kadarının gerçekte pozitif olduğunu gösterir:
+    \begin{equation}
+        \text{Kesinlik} = \frac{TP}{TP + FP}
+    \end{equation}
+
+    \item \textbf{Duyarlılık (Recall):} Gerçek pozitif örneklerin ne kadarının doğru tahmin edildiğini belirler; tıbbi teşhislerde yanlış negatifleri azaltmak açısından kritiktir:
+    \begin{equation}
+        \text{Duyarlılık} = \frac{TP}{TP + FN}
+    \end{equation}
+
+    \item \textbf{F1-Skoru:} Kesinlik ve duyarlılık değerlerinin harmonik ortalamasıdır ve dengesiz veri setlerinde daha güvenilir bir performans göstergesi sunar:
+    \begin{equation}
+        \text{F1-Skoru} = 2 \times \frac{\text{Kesinlik} \times \text{Duyarlılık}}{\text{Kesinlik} + \text{Duyarlılık}}
+    \end{equation}
+\end{itemize}
+
+Ayrıca modellerin farklı sınıflandırma eşik değerlerindeki performansını analiz etmek amacıyla Alıcı İşletim Karakteristiği (ROC) eğrisi kullanılmıştır. Eğri altında kalan alan (AUC), modelin sınıfları birbirinden ayırt etme yeteneğini temsil eden 0 ile 1 arasında bir değerdir; 1'e yakınlık modelin mükemmel ayırt ediciliğini simgeler.
+
+\section{Sonuçlar}
+Bu bölümde, elde edilen deneysel sonuçlar literatür ve model davranışları bağlamında yorumlanmaktadır. Elde edilen bulgular, ResNet18 modelinin tüm performans metriklerinde diğer modellere kıyasla belirgin bir üstünlük sağladığını göstermektedir. 
+
+Tablo \ref{tab:performans}'de sunulan sonuçlara göre ResNet18 modeli, \%99.19 doğruluk ve \%99.23 F1-skoru ile en yüksek performansı elde etmiştir. Bu durum, artık bağlantıların (residual connections) derin ağlarda bilgi kaybını önleyerek daha etkili özellik öğrenimi sağladığını desteklemektedir.
+
+\begin{table}[htbp]
+\caption{Modellerin Test Seti Üzerindeki Karşılaştırmalı Performansı}
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Model} & \textbf{Doğruluk} & \textbf{Kesinlik} & \textbf{Duyarlılık} & \textbf{F1-Skoru} \\
+\hline
+CNN & 0.9302 & 0.9292 & 0.9387 & 0.9340 \\
+\hline
+\textbf{ResNet18} & \textbf{0.9919} & \textbf{0.9948} & \textbf{0.9897} & \textbf{0.9923} \\
+\hline
+ViT-B16 & 0.9410 & 0.9264 & 0.9642 & 0.9450 \\
+\hline
+\end{tabular}
+\label{tab:performans}
+\end{center}
+\end{table}
+
+Karmaşıklık matrisi sonuçları incelendiğinde Tablo \ref{tab:confusion_matrix}'de görüldüğü üzere, ResNet18 modelinin yanlış negatif oranının oldukça düşük olduğu anlaşılmaktadır. Modelin yalnızca 1 pozitif vakayı yanlış sınıflandırması, özellikle tıbbi teşhis sistemlerinde kritik öneme sahip olan yanlış negatif hataların minimize edildiğini göstermektedir. Ayrıca ViT modelinin negatif sınıfları ayırt etmede CNN'e kıyasla daha dengeli bir performans sergilediği gözlemlenmiştir.
+
+\begin{table}[htbp]
+\caption{ResNet18 Karmaşıklık Matrisi}
+\label{tab:confusion_matrix}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Gerçek / Tahmin} & \textbf{COVID} & \textbf{non-COVID} \\ \hline
+\textbf{COVID} & 176 & 1 \\ \hline
+\textbf{non-COVID} & 2 & 194 \\ \hline
+\end{tabular}
+\end{table}
+
+ROC eğrileri üzerinden yapılan analizler de elde edilen bulguları desteklemektedir. Yapılan değerlendirmeler sonucunda ResNet18 modeli, 0.998 AUC değeri ile neredeyse kusursuz bir sınıf ayrımı gerçekleştirmiştir. Karşılaştırmalı olarak bakıldığında, ViT-B16 modeli 0.987 AUC ve özel tasarlanmış CNN mimarisi ise 0.981 AUC değerlerine ulaşmıştır. Her üç model de oldukça yüksek AUC skorlarına sahip olmakla birlikte, sınıf ayrım gücü ve grafiksel olarak sol üst köşeye yakınlık açısından ResNet18 modelinin diğer mimarilere karşı belirgin bir üstünlük sağladığı görülmektedir.
+
+ViT-B16 modelinin CNN'e kıyasla daha yüksek performans göstermesi, dikkat mekanizmasına dayalı yaklaşımların görüntü içerisindeki küresel ilişkileri yakalama konusundaki başarısını ortaya koymaktadır. Ancak, veri setinin sınırlı büyüklüğü, Transformer tabanlı modellerin performansını sınırlayan önemli bir faktör olarak değerlendirilmektedir. CNN modelinin daha düşük performans göstermesi ise, daha sığ mimari yapısı ve global bağlamı yakalama kapasitesinin sınırlı olmasıyla açıklanabilir. Bu durum, modern derin öğrenme mimarilerinin klasik yapılara kıyasla daha etkili olduğunu kanıtlamaktadır.
+
+\section*{Tartışma ve Sonuç}
+Bu çalışmada, BT görüntüleri kullanılarak COVID-19 enfeksiyonunun otomatik tespiti amacıyla CNN, ResNet18 ve ViT-B16 olmak üzere üç farklı derin öğrenme modeli karşılaştırılmıştır. Yapılan analizler, ResNet18 modelinin diğer modellere kıyasla daha üstün bir performans sergilediğini açıkça ortaya koymuştur. Özellikle elde edilen düşük yanlış negatif oranı ve yüksek AUC değerleri, modelin klinik karar destek sistemlerinde güvenle kullanılabileceğini göstermektedir. 
+
+Çalışma ayrıca, Transformer tabanlı modellerin (ViT) umut vadeden sonuçlar sunduğunu ancak veri seti büyüklüğünün bu tür modellerin performansı üzerinde kritik bir etkisi olduğunu göstermiştir. Sonuç olarak, derin öğrenme tabanlı yöntemlerin COVID-19'un BT görüntüleri üzerinden hızlı ve güvenilir şekilde tespit edilmesinde etkili bir araç olduğu doğrulanmıştır. Bu tür sistemler, özellikle yoğun klinik ortamlarda radyologlara destek sağlayarak erken teşhis süreçlerini hızlandırabilir. 
+
+Gelecek çalışmalar kapsamında daha büyük ve çeşitli veri setlerinin kullanılması, farklı model kombinasyonlarının (ensemble yöntemler) denenmesi ve gerçek zamanlı klinik uygulamalara entegrasyon gibi konuların ele alınması önerilmektedir.
+
+
+\begin{thebibliography}{00}
+
+\bibitem{ref1} D. Dülger ve S. Ekici, ``Günümüz Pandemisi COVID-19'un Laboratuvar Tanı Yöntemleri,'' \textit{Avrasya Sağlık Bilimleri Dergisi}, cilt 3, ss. 111-115, 2020. [Çevrimiçi]. Erişilebilir: https://izlik.org/JA26GD44DY
+
+\bibitem{ref2} M. Rezaei vd., ``Point of Care Diagnostics in the Age of COVID-19,'' \textit{Diagnostics}, cilt 11, no. 1, s. 9, 2020. [Çevrimiçi]. Erişilebilir: https://doi.org/10.3390/diagnostics11010009
+
+\bibitem{ref3} E. Soares, P. Angelov, S. Biaso, M. H. Froes, ve D. K. Abe, ``SARS-CoV-2 CT-scan dataset: A large dataset of real patients CT scans for SARS-CoV-2 identification,'' \textit{medRxiv}, 2020. [Çevrimiçi]. Erişilebilir: https://doi.org/10.1101/2020.04.24.20078584
+
+\bibitem{ref4} E. Soares, P. Angelov, S. Biaso, M. H. Froes, ve D. K. Abe, ``SARS-CoV-2 CT-scan dataset: A large dataset of real patients CT scans for SARS-CoV-2 identification,'' \textit{medRxiv}, 2020. [Çevrimiçi]. Erişilebilir: https://doi.org/10.1101/2020.04.24.20078584
+
+\bibitem{ref5} A. A. Ardakani, A. R. Kanafi, U. R. Acharya, N. Khadem, ve A. Mohammadi, ``Application of deep learning technique to manage COVID-19 in routine clinical practice using CT images: Results of 10 convolutional neural networks,'' \textit{Computers in Biology and Medicine}, cilt 121, s. 103795, 2020. [Çevrimiçi]. Erişilebilir: https://doi.org/10.1016/j.compbiomed.2020.103795
+
+\bibitem{ref6} Y. Song vd., ``Deep Learning Enables Accurate Diagnosis of Novel Coronavirus (COVID-19) With CT Images,'' \textit{IEEE/ACM Transactions on Computational Biology and Bioinformatics}, cilt 18, no. 6, ss. 2775–2780, 2021. [Çevrimiçi]. Erişilebilir: https://doi.org/10.1109/TCBB.2021.3065361
+
+\bibitem{ref7} H. Jiang, S. Tang, W. Liu, ve Y. Zhang, ``Deep learning for COVID-19 chest CT (computed tomography) image analysis: A lesson from lung cancer,'' \textit{Computational and Structural Biotechnology Journal}, cilt 19, ss. 1391–1399, 2021. [Çevrimiçi]. Erişilebilir: https://doi.org/10.1016/j.csbj.2021.02.016
+
+\bibitem{ref8} Ş. Kılıç, ``A Novel Multi-Head Attention Framework for COVID-19 Detection: Hybrid Integration of MobileNet and VGG19 with Enhanced Feature Learning,'' \textit{Çukurova Üniversitesi Mühendislik Fakültesi Dergisi}, cilt 40, no. 3, ss. 655-670, 2025. [Çevrimiçi]. Erişilebilir: https://doi.org/10.21605/cukurovaumfd.1653486
+
+\bibitem{ref9} M. T. Sarıoğlu, ``A comparison of deep neural network architectures for COVID-19 detection using CT chest images,'' Yüksek Lisans Tezi, Orta Doğu Teknik Üniversitesi, Ankara, 2022.
+
+\end{thebibliography}
+
+\section*{Kaggle ve GitHub}
+
+Github:
+\url{https://github.com/Eminkorkut/Veri-Bilimi-Project}
+
+Kaggle:
+\url{https://www.kaggle.com/code/eminkorkut/fork-of-sars-cov-2-ct-scan-dataset-3-model}
+
+\end{document}
